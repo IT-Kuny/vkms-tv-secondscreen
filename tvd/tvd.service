@@ -1,0 +1,12 @@
+[Unit]
+Description=tvd — TV virtual display daemon
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/python3 %h/Github/vkms-tv-secondscreen/tvd/tvd.py
+Restart=on-failure
+RestartSec=3
+Environment=PYTHONPATH=%h/Github/vkms-tv-secondscreen/tvd
+
+[Install]
+WantedBy=graphical-session.target
