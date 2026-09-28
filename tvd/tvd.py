@@ -15,6 +15,8 @@ import json, os, socket, subprocess, sys, threading
 
 from layout import Layout
 
+layout = Layout()
+
 SOCK = os.path.join(os.environ.get("XDG_RUNTIME_DIR", "/run/user/1000"), "tvd.sock")
 DEFAULT_MODE = (1920, 1080, 60)
 
@@ -30,24 +32,25 @@ def run(cmd: list[str]) -> str:
 
 
 def connector_name() -> str:
-    out = run(["monitorize-vkms", "status"])
+    out = run(["monitorize-vkms", "list"])
     for line in out.splitlines():
-        if line.strip().startswith("Connector"):
-            return line.split(":", 1)[1].strip()
-    raise RuntimeError(f"no connector in status output:\n{out}")
+        if "[connected]" in line:
+            name = line.split("]")[0].split("[")[0].strip().lstrip("•").strip()
+            return name.split("-", 1)[1] if "-" in name else name
+    raise RuntimeError(f"no connected connector in list output:\n{out}")
 
 
 def do_create(w: int, h: int, rr: int) -> dict:
     run(["monitorize-vkms", "create", f"{w}x{h}@{rr}"])
     conn = connector_name()
-    Layout.extend(conn, w)
+    layout.extend(conn, w)
     state.update(display=True, connector=conn)
     return {"connector": conn, "mode": f"{w}x{h}@{rr}"}
 
 
 def do_remove() -> dict:
     conn = state.get("connector")
-    Layout.restore()
+    layout.restore()
     if conn:
         run(["monitorize-vkms", "remove"])
     state.update(display=False, connector=None)
